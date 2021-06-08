@@ -8,6 +8,9 @@ const player1 = {
     hp: 100,
     img: 'http://reactmarathon-api.herokuapp.com/assets/scorpion.gif',
     weapon: ['Kunai', 'Axe', 'Ninja Sword'],
+    changeHP: changeHP,
+    elHP: elHP,
+    renderHP: renderHP,
     attack: function() {
         console.log(player1.name + ' Fight...');
     }
@@ -19,6 +22,9 @@ const player2 = {
     hp: 100,
     img: 'http://reactmarathon-api.herokuapp.com/assets/subzero.gif',
     weapon: ['Ice Scepter', 'Kori Blade', 'Hummer'],
+    changeHP: changeHP,
+    elHP: elHP,
+    renderHP: renderHP,
     attack: function() {
         console.log(player2.name + ' Fight...');
     }
@@ -62,27 +68,54 @@ function createPlayer(playerObject) {
     return $div;
 }
 
-function changeHP(player) {
-    // изменить HP
-    const $playerLife = document.querySelector('.player' + player.player + ' .life');
-    player.hp -= Math.ceil(Math.random() * 20);
+function getRandom(number){
+    return Math.ceil(Math.random() * number);
+}
 
-    if (player.hp <= 0) {
-        player.hp = 0;
-        $randomButton.disabled = true;
+
+// old changeHP
+//function changeHP(player) {
+//    // изменить HP
+//    const $playerLife = document.querySelector('.player' + player.player + ' .life');
+//    player.hp -= getRandom(20);
+//
+//    if (player.hp <= 0) {
+//        player.hp = 0;
+//    }
+//    $playerLife.style.width = player.hp + '%';
+//}
+
+
+// 1. Функция changeHP должна в аргументах принимать, на какое кол-во надо изменять HP.
+// И решать, нужно ли отнимать или ставить 0. Больше ничего эта функция не должна делать.
+function changeHP(hp) {
+    if (this.hp <= hp) {
+        this.hp = 0;
+    } else {
+        this.hp -= hp;
     }
-    $playerLife.style.width = player.hp + '%';
 }
 
 
-function createTitle(playerName, className, title){
-    const $title = createElement('div', className);
-
-    $title.innerText = playerName + ' ' + title;
-    $arenas.appendChild($title);
-
-    return $title;
+//2. Вторая функци elHP (это именно функция) должна возвращать document.querySelector,
+//который должен ссылаться на внутреннее поле player, которое выводит 1 или 2.
+function elHP() {
+    return document.querySelector('.player' + this.player + ' .life');
 }
+
+//3. Третья функци renderHP должна только рендерить hp, т.е. рисовать hp при помощи style.width.
+function renderHP() {
+    this.elHP().style.width = this.hp + '%';
+}
+
+//function createTitle(playerName, className, title){
+//    const $title = createElement('div', className);
+//
+//    $title.innerText = playerName + ' ' + title;
+//    $arenas.appendChild($title);
+//
+//    return $title;
+//}
 
 
 //function playerLose(name){
@@ -94,24 +127,55 @@ function createTitle(playerName, className, title){
 //}
 
 
-//function playerWin(name){
-//    // победитель
-//    const $winTitle = createElement('div', 'winTitle');
-//    $winTitle.innerText = name + ' wins';
-//
-//    return $winTitle;
-//}
+function playerWin(name){
+    // победитель
+    const $winTitle = createElement('div', 'winTitle');
+    if (name) {
+        $winTitle.innerText = name + ' wins';
+    } else {
+        $winTitle.innerText = 'draw';
+    }
+    return $winTitle;
+}
+
+
+function createReloadButton(){
+    const $divReloadWrap = createElement('div', 'reloadWrap');
+    const $button = createElement('button', 'button');
+    $button.innerText = 'Restart';
+
+    $divReloadWrap.appendChild($button);
+
+
+    $button.addEventListener('click', function() {
+        window.location.reload();
+    });
+}
+
 
 
 $randomButton.addEventListener('click', function() {
-    console.log('Click button');
-    changeHP(player2);
-    changeHP(player1);
+//    console.log('Click button');
+//    changeHP(player2);
+//    changeHP(player1);
 
-    if (player1.hp == 0) {
-        createTitle(player2.name, 'winTitle', 'wins');
-    } else if (player2.hp == 0) {
-        createTitle(player1.name, 'winTitle', 'wins');
+    player2.changeHP(getRandom(20));
+    player1.changeHP(getRandom(20));
+
+    player2.renderHP();
+    player1.renderHP();
+
+    if (player1.hp === 0 || player2.hp === 0) {
+        $randomButton.disabled = true;
+        createReloadButton();
+    }
+
+    if (player1.hp === 0 && player1.hp < player2.hp) {
+        $arenas.appendChild(playerWin(player2.name));
+    } else if (player2.hp === 0 && player2.hp < player1.hp) {
+        $arenas.appendChild(playerWin(player1.name));
+    } else if (player1.hp === 0 && player2.hp === 0) {
+        $arenas.appendChild(playerWin());
     }
 });
 
