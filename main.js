@@ -145,7 +145,7 @@ function createReloadButton(){
     $button.innerText = 'Restart';
 
     $divReloadWrap.appendChild($button);
-
+    $arenas.appendChild($divReloadWrap);
 
     $button.addEventListener('click', function() {
         window.location.reload();
