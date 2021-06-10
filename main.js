@@ -1,6 +1,14 @@
 
 const $arenas = document.querySelector('.arenas');
 const $randomButton = document.querySelector('.button');
+const $formFight = document.querySelector('.control');
+
+const HIT = {
+    head: 30,
+    body: 25,
+    foot: 20,
+}
+const ATTACK = ['head', 'body', 'foot'];
 
 const player1 = {
     player: 1,
@@ -8,12 +16,13 @@ const player1 = {
     hp: 100,
     img: 'http://reactmarathon-api.herokuapp.com/assets/scorpion.gif',
     weapon: ['Kunai', 'Axe', 'Ninja Sword'],
-    changeHP: changeHP,
-    elHP: elHP,
-    renderHP: renderHP,
-    attack: function() {
-        console.log(player1.name + ' Fight...');
-    }
+    changeHP,
+    elHP,
+    renderHP,
+    attack,
+//    attack: function() {
+//        console.log(player1.name + ' Fight...');
+//    }
 };
 
 const player2 = {
@@ -22,12 +31,10 @@ const player2 = {
     hp: 100,
     img: 'http://reactmarathon-api.herokuapp.com/assets/subzero.gif',
     weapon: ['Ice Scepter', 'Kori Blade', 'Hummer'],
-    changeHP: changeHP,
-    elHP: elHP,
-    renderHP: renderHP,
-    attack: function() {
-        console.log(player2.name + ' Fight...');
-    }
+    changeHP,
+    elHP,
+    renderHP,
+    attack,
 };
 
 
@@ -68,6 +75,7 @@ function createPlayer(playerObject) {
     return $div;
 }
 
+
 function getRandom(number){
     return Math.ceil(Math.random() * number);
 }
@@ -106,6 +114,13 @@ function elHP() {
 //3. Третья функци renderHP должна только рендерить hp, т.е. рисовать hp при помощи style.width.
 function renderHP() {
     this.elHP().style.width = this.hp + '%';
+}
+
+function attack(attack, enemy){
+    if (attack.defence != enemy.hit) {
+        this.changeHP(enemy.value);
+        this.renderHP();
+    }
 }
 
 //function createTitle(playerName, className, title){
@@ -153,17 +168,81 @@ function createReloadButton(){
 }
 
 
+//$randomButton.addEventListener('click', function() {
+////    console.log('Click button');
+////    changeHP(player2);
+////    changeHP(player1);
+//
+//    player2.changeHP(getRandom(20));
+//    player1.changeHP(getRandom(20));
+//
+//    player2.renderHP();
+//    player1.renderHP();
+//
+//    if (player1.hp === 0 || player2.hp === 0) {
+//        $randomButton.disabled = true;
+//        createReloadButton();
+//    }
+//
+//    if (player1.hp === 0 && player1.hp < player2.hp) {
+//        $arenas.appendChild(playerWin(player2.name));
+//    } else if (player2.hp === 0 && player2.hp < player1.hp) {
+//        $arenas.appendChild(playerWin(player1.name));
+//    } else if (player1.hp === 0 && player2.hp === 0) {
+//        $arenas.appendChild(playerWin());
+//    }
+//});
 
-$randomButton.addEventListener('click', function() {
-//    console.log('Click button');
-//    changeHP(player2);
-//    changeHP(player1);
 
-    player2.changeHP(getRandom(20));
-    player1.changeHP(getRandom(20));
+$arenas.appendChild(createPlayer(player1));
+$arenas.appendChild(createPlayer(player2));
 
-    player2.renderHP();
-    player1.renderHP();
+
+function enemyAttack(){
+    // удар противника
+    const hit = ATTACK[getRandom(3)-1];  // куда бить
+    const defence = ATTACK[getRandom(3)-1]; // что защищать
+
+    return {
+        value: getRandom(HIT[hit]),
+        hit,
+        defence,
+    }
+}
+
+
+function writeWinTitle(name){
+    $arenas.appendChild(playerWin(name))
+}
+
+
+$formFight.addEventListener('submit', function(event){
+    event.preventDefault();
+
+    const enemy = enemyAttack();
+    const attack = {};
+
+    for (let item of $formFight){
+        if (item.checked && item.name === 'hit'){
+            attack.value = getRandom(HIT[item.value]);
+            attack.hit = item.value;
+        }
+
+        if (item.checked && item.name === 'defence'){
+            attack.defence = item.value;
+        }
+
+        item.checked = false;
+    }
+
+    player1.attack(attack, enemy);
+    player2.attack(enemy, attack);
+
+//    console.log('attack: ', attack);
+//    console.log('enemy: ', enemy);
+//
+//    console.log('player1', player1.hp);
+//    console.log('player2', player2.hp);
 
     if (player1.hp === 0 || player2.hp === 0) {
         $randomButton.disabled = true;
@@ -171,16 +250,14 @@ $randomButton.addEventListener('click', function() {
     }
 
     if (player1.hp === 0 && player1.hp < player2.hp) {
-        $arenas.appendChild(playerWin(player2.name));
+        writeWinTitle(player2.name);
     } else if (player2.hp === 0 && player2.hp < player1.hp) {
-        $arenas.appendChild(playerWin(player1.name));
+        writeWinTitle(player1.name);
     } else if (player1.hp === 0 && player2.hp === 0) {
-        $arenas.appendChild(playerWin());
+        writeWinTitle();
     }
-});
+})
 
-$arenas.appendChild(createPlayer(player1));
-$arenas.appendChild(createPlayer(player2));
 
 //- http://reactmarathon-api.herokuapp.com/assets/scorpion.gif
 //- http://reactmarathon-api.herokuapp.com/assets/kitana.gif
