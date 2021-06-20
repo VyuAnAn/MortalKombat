@@ -12,61 +12,40 @@ const $arenas = document.querySelector('.arenas');
 
 class Game{
     constructor(props) {
-        this.player1 = {}
-        this.player2 = {}
+        this.player1 = {};
+        this.player2 = {};
     }
 
-    enemyAttack = () => {
-        // удар противника
-        const hit = ATTACK[createRandomNumber(0, ATTACK.length)];  // куда бить
-        const defence = ATTACK[createRandomNumber(0, ATTACK.length)]; // что защищать
-
-        return {
-            value: createRandomNumber(1, HIT[hit] + 1),
-            hit,
-            defence
-        }
+    choosePlayer = async () => {
+        const player = fetch('https://reactmarathon-api.herokuapp.com/api/mk/player/choose')
+            .then(res => res.json());
+        return player;
     }
 
-    fight = ($formFight) => {
-        const { hit: hitEnemy, defence: defenceEnemy, value: valueEnemy } = this.enemyAttack();
-            const { hit, defence, value } = this.playerAttack($formFight);
-
-            if (defence !== hitEnemy){
-                this.player1.changeHP(valueEnemy);
-                this.player1.renderHP();
-                this.generateLogs('hit', this.player2, this.player1, valueEnemy);
-
-            } else if (defence === hitEnemy){
-                this.generateLogs('defence', this.player1, this.player2);
-            }
-
-            if (defenceEnemy !== hit){
-                this.player2.changeHP(value);
-                this.player2.renderHP();
-                this.generateLogs('hit', this.player1, this.player2, value);
-
-            } else if (defenceEnemy === hit){
-                this.generateLogs('defence', this.player2, this.player1);
-            }
-
-            this.showResult(this.player1, this.player2);
+    fightPlayers = async (hit, defence) => {
+       const fight = fetch('http://reactmarathon-api.herokuapp.com/api/mk/player/fight', {
+            method: 'POST',
+            body: JSON.stringify({
+                hit,
+                defence,
+            })
+        }).then(res => res.json());
+        return fight;
     }
 
-    start = () => {
+    start = async () => {
+        const p2 = await this.choosePlayer();
+        const p1 = JSON.parse(localStorage.getItem('player1'));
+
         this.player1 = new Player({
+            ...p1,
             player: 1,
-            name: 'SCORPION',
-            hp: 100,
-            img: 'http://reactmarathon-api.herokuapp.com/assets/scorpion.gif',
             rootSelector: 'arenas',
         });
 
         this.player2 = new Player({
+            ...p2,
             player: 2,
-            name: 'SUB-ZERO',
-            hp: 100,
-            img: 'http://reactmarathon-api.herokuapp.com/assets/subzero.gif',
             rootSelector: 'arenas',
         });
 
@@ -76,12 +55,53 @@ class Game{
         this.generateLogs('start', this.player1, this.player2);
     }
 
+    fight = async ($formFight) => {
+        const { hit, defence } = this.playerAttack($formFight);
+        const resultFight = await this.fightPlayers(hit, defence);
+
+        const { hit: hitPlayer, value: valuePlayer, defence: defencePlayer } = resultFight.player1;
+        const { hit: hitEnemy, value: valueEnemy, defence: defenceEnemy } = resultFight.player2;
+
+
+        if (defencePlayer !== hitEnemy){
+            this.player1.changeHP(valueEnemy);
+            this.player1.renderHP();
+            this.generateLogs('hit', this.player2, this.player1, valueEnemy);
+
+        } else if (defencePlayer === hitEnemy){
+            this.generateLogs('defence', this.player1, this.player2);
+        }
+
+        if (defenceEnemy !== hitPlayer){
+            this.player2.changeHP(valuePlayer);
+            this.player2.renderHP();
+            this.generateLogs('hit', this.player1, this.player2, valuePlayer);
+
+        } else if (defenceEnemy === hitPlayer){
+            this.generateLogs('defence', this.player2, this.player1);
+        }
+
+        this.showResult(this.player1, this.player2);
+    }
+
+//    enemyAttack = () => {
+//        // удар противника
+//        const hit = ATTACK[createRandomNumber(0, ATTACK.length)];  // куда бить
+//        const defence = ATTACK[createRandomNumber(0, ATTACK.length)]; // что защищать
+//
+//        return {
+//            value: createRandomNumber(1, HIT[hit] + 1),
+//            hit,
+//            defence
+//        }
+//    }
+
     playerAttack = ($formFight) => {
         const attack = {};
 
         for (let item of $formFight){
             if (item.checked && item.name === 'hit'){
-                attack.value = createRandomNumber(1, HIT[item.value] + 1);
+//                attack.value = createRandomNumber(1, HIT[item.value] + 1);
                 attack.hit = item.value;
             }
 
@@ -119,7 +139,7 @@ class Game{
         $arenas.appendChild($divReloadWrap);
 
         $button.addEventListener('click', function() {
-            window.location.reload();
+            window.location.pathname = 'MortalKombat/index.html';
         });
     }
 
